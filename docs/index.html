@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Airport Traffic Monitor · 机场流量监控</title>
+<style>
+  :root{
+    --bg:#f6f8fa; --card:#ffffff; --fg:#1f2328; --muted:#6e7781; --line:#e4e8ed;
+    --track:#eaeef2; --accent:#3e63dd; --warn:#e5484d;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0d1117; --card:#161b22; --fg:#e6edf3; --muted:#8b949e; --line:#21262d; --track:#21262d; --accent:#7aa2ff; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 18px 60px}
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:18px}
+  h1{font-size:20px;margin:0;font-weight:650}
+  .stamp{color:var(--muted);font-size:12px}
+  .dot{width:7px;height:7px;border-radius:50%;background:#30a46c;display:inline-block;margin-right:5px}
+  .dot.stale{background:#f76b15}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0 22px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi .k{color:var(--muted);font-size:12px}
+  .kpi .v{font-size:20px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
+  section{margin:26px 0}
+  h2{font-size:14px;margin:0 0 10px;font-weight:650;letter-spacing:.02em}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .row{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;padding:7px 0}
+  .row .name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar{height:10px;background:var(--track);border-radius:5px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:5px}
+  .row .val{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .quota{height:3px;background:var(--track);border-radius:2px;margin-top:4px;overflow:hidden}
+  .quota > i{display:block;height:100%}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  tr:last-child td{border-bottom:none}
+  .tag{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:5px}
+  .muted{color:var(--muted)}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;font-size:12px;color:var(--muted)}
+  .legend i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px}
+  svg{width:100%;height:auto;display:block}
+  .empty{color:var(--muted);text-align:center;padding:26px 0}
+  footer{margin-top:36px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>机场流量监控</h1>
+    <span class="stamp" id="stamp"><span class="dot"></span>载入中…</span>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <h2>各机场</h2>
+    <div class="card" id="airports"></div>
+  </section>
+
+  <section>
+    <h2>机场 × 设备</h2>
+    <div class="card" id="matrix"></div>
+  </section>
+
+  <section>
+    <h2>近 24 小时</h2>
+    <div class="legend" id="legend1"></div>
+    <div class="card"><div id="hourly"></div></div>
+  </section>
+
+  <section>
+    <h2>近 14 天</h2>
+    <div class="legend" id="legend2"></div>
+    <div class="card"><div id="daily"></div></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const REFRESH_MS = 30000;
+const PALETTE = ['#e5484d','#3e63dd','#30a46c','#f76b15','#8e4ec6','#0091ff','#d6409f','#f5d90a','#12a594'];
+
+function fmtBytes(n){
+  n = Number(n) || 0;
+  if (n < 1024) return Math.round(n) + ' B';
+  const u = ['KB','MB','GB','TB','PB'];
+  let v = n / 1024, i = 0;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (v >= 100 ? v.toFixed(0) : v.toFixed(v >= 10 ? 1 : 2)) + ' ' + u[i];
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDate = ts => ts ? new Date(ts * 1000).toISOString().slice(0,10) : '—';
+
+let data = null;
+let timer = 0;
+
+function colorFor(name, airports){
+  const hit = (airports || []).find(a => a.name === name);
+  if (hit && hit.color) return hit.color;
+  const i = (airports || []).findIndex(a => a.name === name);
+  return PALETTE[(i < 0 ? 0 : i) % PALETTE.length];
+}
+
+function renderKpis(d){
+  const t = d.totals || {};
+  const cards = [
+    ['本周期总用量', fmtBytes((t.up||0) + (t.down||0))],
+    ['今日', fmtBytes(t.today)],
+    ['近 24 小时', fmtBytes(t.last24h)],
+    ['设备 / 机场', (d.devices||[]).length + ' / ' + (d.airports||[]).length],
+  ];
+  document.getElementById('kpis').innerHTML = cards.map(([k,v]) =>
+    `<div class="kpi"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join('');
+}
+
+function renderAirports(d){
+  const list = d.airports || [];
+  if (!list.length){ document.getElementById('airports').innerHTML = '<div class="empty">还没有数据</div>'; return; }
+  const max = Math.max(1, ...list.map(a => a.used || 0));
+  document.getElementById('airports').innerHTML = list.map(a => {
+    const pct = a.total ? Math.min(100, (a.used / a.total) * 100) : null;
+    const w = Math.max(2, ((a.used || 0) / max) * 100);
+    const note = a.total
+      ? `${Math.round(pct)}% · 剩 ${fmtBytes(Math.max(0, a.total - a.used))} · 到期 ${fmtDate(a.expire)}`
+      : '未设配额';
+    return `<div class="row">
+      <div class="name" title="${esc(a.name)}">${esc(a.name)}${a.shared ? '<span class="tag">共享</span>' : ''}</div>
+      <div>
+        <div class="bar"><i style="width:${w.toFixed(1)}%;background:${esc(a.color)}"></i></div>
+        ${pct === null ? '' : `<div class="quota"><i style="width:${pct.toFixed(1)}%;background:${esc(a.color)};opacity:.5"></i></div>`}
+      </div>
+      <div class="val">${fmtBytes(a.used)}<br><span class="muted">${esc(note)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderMatrix(d){
+  const devs = (d.devices || []).map(x => x.name);
+  const rows = d.matrix || [];
+  if (!rows.length || !devs.length){ document.getElementById('matrix').innerHTML = '<div class="empty">还没有数据</div>'; return; }
+  let html = '<table><thead><tr><th>机场</th>' +
+    devs.map(n => `<th>${esc(n)}</th>`).join('') + '<th>合计</th></tr></thead><tbody>';
+  for (const r of rows){
+    const cells = devs.map(dn => {
+      const c = (r.cells || []).find(x => x.device === dn);
+      if (!c) return '<td class="muted">·</td>';
+      if (c.shared) return '<td class="muted">共享</td>';
+      return `<td>${fmtBytes(c.bytes)}</td>`;
+    });
+    html += `<tr><td>${esc(r.airport)}</td>${cells.join('')}<td>${fmtBytes(r.used)}</td></tr>`;
+  }
+  document.getElementById('matrix').innerHTML = html + '</tbody></table>';
+}
+
+function renderStacked(el, legendEl, series, keys, airports, height){
+  if (!series || !series.length){ el.innerHTML = '<div class="empty">还没有数据</div>'; return; }
+  const W = 860, H = height || 220, padL = 8, padR = 8, top = 12, bottom = 22;
+  const plotW = W - padL - padR, plotH = H - top - bottom;
+  const max = Math.max(1, ...series.map(s => s.total || 0));
+  const slot = plotW / series.length;
+  const barW = Math.max(2, Math.min(26, slot * 0.68));
+
+  legendEl.innerHTML = keys.map(k => `<span><i style="background:${colorFor(k, airports)}"></i>${esc(k)}</span>`).join('');
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  for (let g = 0; g <= 2; g++){
+    const y = top + plotH * g / 2;
+    s += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+  }
+  series.forEach((item, i) => {
+    const cx = padL + slot * i + slot / 2;
+    let y = top + plotH;
+    keys.forEach(k => {
+      const v = (item.byAirport || {})[k] || 0;
+      if (!v) return;
+      const h = v / max * plotH;
+      y -= h;
+      s += `<rect x="${(cx - barW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0.8,h).toFixed(1)}" fill="${colorFor(k, airports)}" rx="1.5"/>`;
+    });
+    if (series.length <= 14 || i % 2 === 0){
+      const label = item.date ? item.date.slice(5) : (item.label || '');
+      s += `<text x="${cx}" y="${H - 6}" font-size="9" fill="var(--muted)" text-anchor="middle">${esc(label)}</text>`;
+    }
+  });
+  el.innerHTML = s + '</svg>';
+}
+
+function render(d){
+  data = d;
+  renderKpis(d);
+  renderAirports(d);
+  renderMatrix(d);
+  renderStacked(document.getElementById('hourly'), document.getElementById('legend1'),
+    d.hourly, (d.airports||[]).map(a => a.name), d.airports, 200);
+  renderStacked(document.getElementById('daily'), document.getElementById('legend2'),
+    d.daily, (d.airports||[]).map(a => a.name), d.airports, 220);
+
+  const ageMin = (Date.now() - new Date(d.generatedAt).getTime()) / 60000;
+  const stale = !(ageMin < (d.staleMinutes || 60));
+  document.getElementById('stamp').innerHTML =
+    `<span class="dot${stale ? ' stale' : ''}"></span>数据时间 ${esc(d.generatedAtLocal)}` +
+    (stale ? ' · 已超过 1 小时未更新' : '');
+
+  document.getElementById('foot').innerHTML =
+    `统计时区 ${esc(d.timezone)} · 本周期起算 ${esc(d.cycleStart)} · 面板每 ${REFRESH_MS/1000}s 自动刷新` +
+    ((d.warnings||[]).length ? `<br>告警：${d.warnings.map(esc).join('；')}` : '');
+}
+
+async function tick(){
+  try{
+    const res = await fetch('data/aggregate.json?_=' + Date.now(), {cache: 'no-store'});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    render(await res.json());
+  }catch(e){
+    if (!data) document.getElementById('stamp').innerHTML = `<span class="dot stale"></span>读取失败：${esc(e.message)}`;
+  }
+  clearTimeout(timer);
+  timer = setTimeout(tick, REFRESH_MS);
+}
+
+tick();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+</script>
+</body>
+</html>

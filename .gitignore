@@ -1,0 +1,27 @@
+# 依赖（本项目零依赖，仅防御性忽略）
+node_modules/
+package-lock.json
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 密钥/本地覆盖：绝不提交
+.env
+.env.*
+!.env.example
+config/meter.local.json
+
+# 临时
+*.log
+tmp/
+.cache/
+
+# 设备原始数据要提交（GitHub Actions 靠它聚合），但允许本地调试文件
+data/devices/_*.json

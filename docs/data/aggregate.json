@@ -1,0 +1,139 @@
+{
+ "generatedAt": "2026-10-25T04:25:04.625Z",
+ "generatedAtLocal": "2026-10-25 12:25",
+ "timezone": "Asia/Shanghai",
+ "today": "2026-10-25",
+ "cycleStart": "2026-10-01",
+ "resetDay": 1,
+ "nowHourKey": "2026-10-25T12",
+ "staleMinutes": 60,
+ "totals": {
+  "up": 3145728,
+  "down": 62914560,
+  "cycle": 66060288,
+  "today": 11534336,
+  "last24h": 0
+ },
+ "airports": [
+  {
+   "name": "机场A",
+   "up": 2097152,
+   "down": 50331648,
+   "used": 52428800,
+   "cycleUp": 2097152,
+   "cycleDown": 50331648,
+   "cycleBytes": 52428800,
+   "total": 536870912000,
+   "expire": 1798732800,
+   "at": 1792902301,
+   "color": "#e5484d",
+   "shared": true
+  },
+  {
+   "name": "机场B",
+   "up": 1048576,
+   "down": 12582912,
+   "used": 13631488,
+   "cycleUp": 1048576,
+   "cycleDown": 12582912,
+   "cycleBytes": 13631488,
+   "total": 214748364800,
+   "expire": 1798732800,
+   "at": 1792902301,
+   "color": "#3e63dd",
+   "shared": true
+  }
+ ],
+ "devices": [
+  {
+   "name": "demo-iPhone",
+   "source": "sub",
+   "updatedAt": 1792902301,
+   "todayBytes": 11534336,
+   "cycleBytes": 33554432,
+   "exclusive": false,
+   "airports": [
+    "机场A",
+    "机场B"
+   ]
+  },
+  {
+   "name": "demo-MacBook",
+   "source": "sub",
+   "updatedAt": 1792902301,
+   "todayBytes": 5242880,
+   "cycleBytes": 14680064,
+   "exclusive": false,
+   "airports": [
+    "机场A",
+    "机场B"
+   ]
+  }
+ ],
+ "matrix": [
+  {
+   "airport": "机场A",
+   "used": 52428800,
+   "cells": [
+    {
+     "device": "demo-iPhone",
+     "source": "sub",
+     "bytes": 52428800,
+     "shared": true
+    },
+    {
+     "device": "demo-MacBook",
+     "source": "sub",
+     "bytes": 52428800,
+     "shared": true
+    }
+   ]
+  },
+  {
+   "airport": "机场B",
+   "used": 13631488,
+   "cells": [
+    {
+     "device": "demo-iPhone",
+     "source": "sub",
+     "bytes": 13631488,
+     "shared": true
+    },
+    {
+     "device": "demo-MacBook",
+     "source": "sub",
+     "bytes": 13631488,
+     "shared": true
+    }
+   ]
+  }
+ ],
+ "daily": [
+  {
+   "date": "2026-10-23",
+   "total": 7340032,
+   "byAirport": {
+    "机场A": 6291456,
+    "机场B": 1048576
+   }
+  },
+  {
+   "date": "2026-10-24",
+   "total": 14680064,
+   "byAirport": {
+    "机场A": 11534336,
+    "机场B": 3145728
+   }
+  },
+  {
+   "date": "2026-10-25",
+   "total": 11534336,
+   "byAirport": {
+    "机场A": 9437184,
+    "机场B": 2097152
+   }
+  }
+ ],
+ "hourly": [],
+ "warnings": []
+}

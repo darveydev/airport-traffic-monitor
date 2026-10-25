@@ -1,0 +1,43 @@
+name: airport-traffic-monitor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/devices/**'
+  workflow_dispatch:
+  schedule:
+    # 每小时刷一次，用来更新「生成时间」和补齐跨天/跨小时的空档
+    - cron: '17 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: traffic-aggregate
+  cancel-in-progress: true
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 聚合设备数据并重绘图表
+        run: node scripts/aggregate.mjs
+
+      - name: 提交结果
+        run: |
+          git config user.name "traffic-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "没有变化，跳过提交"
+          else
+            git commit -m "chore: refresh traffic dashboard [skip ci]"
+            git push || (git pull --rebase --autostash && git push)
+          fi

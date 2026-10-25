@@ -1,0 +1,24 @@
+{
+  "_note": "机场列表与订阅链接放这里。改完直接提交，设备端最迟 1 小时内生效（配置有 1 小时缓存）。sub 就是机场给你的订阅地址，脚本靠它读 subscription-userinfo。",
+  "timezone": "Asia/Shanghai",
+  "resetDay": 1,
+  "interval": 10,
+  "pollInterval": 10,
+  "retention": 120,
+  "airports": [
+    {
+      "name": "机场A",
+      "sub": "https://sub.example-a.com/api/v1/client/subscribe?token=REPLACE_ME",
+      "quotaGB": 500,
+      "color": "#e5484d",
+      "match": ["^A-", "^香港", "^HK"]
+    },
+    {
+      "name": "机场B",
+      "sub": "https://sub.example-b.com/api/v1/client/subscribe?token=REPLACE_ME",
+      "quotaGB": 200,
+      "color": "#3e63dd",
+      "match": ["^B-", "^日本", "^JP"]
+    }
+  ]
+}
