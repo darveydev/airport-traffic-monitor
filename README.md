@@ -6,7 +6,7 @@
 - **仓库**：darveydev/airport-traffic-monitor
 
 <!-- TRAFFIC:START -->
-> 数据更新时间：**2026-10-25 12:41**（Asia/Shanghai）｜本周期起算：2026-10-01｜每次设备上报后自动刷新
+> 数据更新时间：**2026-10-25 12:46**（Asia/Shanghai）｜本周期起算：2026-10-01｜每次设备上报后自动刷新
 
 **本周期总用量 63.0 MB**　·　今日 11.0 MB　·　近 24 小时 0 B
 
@@ -40,9 +40,50 @@
 
 ## 怎么看
 
+- **在线面板**：[darveydev.github.io/airport-traffic-monitor](https://darveydev.github.io/airport-traffic-monitor/) —— 页面每 30 秒自动拉一次数据，比 README 更及时。已部署完毕，无需再配置。
 - **本页（README）**：机场用量、机场 × 设备矩阵、近 14 天 / 近 24 小时趋势图。每次设备上报（默认 10 分钟）后自动刷新。
-- **在线面板**：开启 GitHub Pages（Settings → Pages → Source 选 `Deploy from a branch`，分支 `main`、目录 `/docs`），
-  打开 `https://<你的用户名>.github.io/<仓库名>/`，页面每 30 秒自动拉一次数据，比 README 更及时。
+
+## 三步开始用
+
+### 1. 填机场订阅
+
+编辑 `config/meter.json`，把 `airports` 里的 `sub` 换成机场订阅链接，`name` 改成你习惯的叫法：
+
+```json
+{
+  "name": "我的机场",
+  "sub": "https://你的机场域名/api/v1/client/subscribe?token=你的token",
+  "quotaGB": 500,
+  "color": "#e5484d"
+}
+```
+
+改完直接提交到 `main`，设备端最迟 1 小时内拉到新配置。
+
+### 2. 在小火箭里装模块
+
+把本仓库的 `TrafficMeter.module` 和 `TrafficMeter.js` 放到同一目录（或都用 raw 链接），编辑 module 里那一行 `argument`：
+
+```
+repo=darveydev/airport-traffic-monitor&token=你的PAT&device=iPhone&branch=main
+```
+
+- `device` 每台设备必须不同（iPhone / iPad / MacBook）
+- `token` 用 fine-grained PAT，勾 **Contents: Read and write**，只授权本仓库，设个过期时间
+
+### 3. 等 10 分钟
+
+仓库里出现 `data/devices/<设备名>.json` 就成功了，面板随即刷新。
+
+## 常见问题
+
+| 现象 | 原因与处理 |
+| --- | --- |
+| 面板一直 0 B | 模块没启用 / PAT 没写权限 / `device` 名和别的设备撞了 |
+| 机场显示「未分组」 | `config/meter.json` 里没配这个机场，或 `sub` 链接失效 |
+| 数字不涨 | 机场对订阅拉取限流，把 `pollInterval` 调大到 30 |
+| 只涨一次就停 | 小火箭把 cron 停了，改用 module 里注释掉的 `http-request` 触发方式 |
+| Actions 提交失败 | 仓库 Settings → Actions → General → Workflow permissions 要选 **Read and write**（本仓库已配置好） |
 
 ## 目录
 

@@ -1,10 +1,18 @@
 {
-  "_note": "机场列表与订阅链接放这里。改完直接提交，设备端最迟 1 小时内生效（配置有 1 小时缓存）。sub 就是机场给你的订阅地址，脚本靠它读 subscription-userinfo。",
+  "_note": "机场列表与订阅链接。改完直接提交到 main，设备端最迟 1 小时内生效（配置有 1 小时缓存）。sub 就是机场给你的订阅地址，脚本靠它读响应头 subscription-userinfo。改 name/quotaGB/color/match 都不影响已记录的历史数据。",
+  "_howto": [
+    "1. 在机场后台复制『订阅链接』，粘贴到对应 sub 字段，替换 REPLACE_ME",
+    "2. name 随便起（中文可以），会显示在看板和图表上",
+    "3. quotaGB 填套餐总流量（GB），用于画配额进度条；不知道就删掉这个字段",
+    "4. color 是看板配色，可删（会自动分配）",
+    "5. match 只在 Surge 等能读节点级流量的客户端里用，正则匹配节点名；小火箭走订阅头不需要它"
+  ],
   "timezone": "Asia/Shanghai",
   "resetDay": 1,
   "interval": 10,
   "pollInterval": 10,
   "retention": 120,
+  "hoursRetention": 72,
   "airports": [
     {
       "name": "机场A",

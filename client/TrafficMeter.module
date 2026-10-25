@@ -1,0 +1,34 @@
+#!name=AirportTrafficMonitor
+#!desc=机场流量监控：按机场统计用量，自动上报 GitHub 并生成可视化面板（小火箭 / Surge 通用）
+
+[Script]
+# ─────────────────────────────────────────────────────────────────────────────
+# 装之前先做两件事：
+#   1. 把 TrafficMeter.js 放到与本源文件同一目录（或换成 raw 链接）；
+#   2. 把下面 argument 里的 repo / token / device 改成自己的。
+#
+# argument 三个参数：
+#   repo    GitHub 仓库 owner/repo，例如 darveydev/surge-traffic
+#   token   fine-grained PAT，只给该仓库 Contents: Read and write，设个过期时间
+#   device  这台设备的名字，多台设备务必不重复（MacBook / iPhone / iPad）
+#   branch  可选，默认 main
+#
+# 机场列表和订阅链接不写在这里 —— 放在仓库的 config/meter.json 里，
+# 脚本每轮通过 Contents API 拉一次（缓存 1 小时），在 GitHub 网页上改就行。
+#
+# 小火箭没有「按节点累计流量」的接口，所以走订阅头 subscription-userinfo 拿
+# 机场自己统计的账号用量；Surge 等有 $httpAPI 的客户端会自动改用 /v1/metrics
+# 拿本机节点级数字。两条路的产物格式一样，面板不用改。
+#
+# timeout 给 60s：一轮要拉配置 + 若干订阅 + 可能写一次文件。
+# cronexp 每 10 分钟：再快意义不大，机场的用量数字本身也不是秒级更新的。
+# ─────────────────────────────────────────────────────────────────────────────
+
+traffic.meter.collect = type=cron,cronexp="*/10 * * * *",timeout=60,script-path=TrafficMeter.js,argument=repo=darveydev/airport-traffic-monitor&token=github_pat_xxxxxxxx&device=iPhone&branch=main
+
+# ── 备选触发方式 ────────────────────────────────────────────────────────────
+# 如果你的小火箭版本不认 type=cron（表现为：等十几分钟毫无动静、面板一直是空的），
+# 删掉上面那行，改用下面这行 —— 挂在系统「网络探测」请求上，有网就会顺带跑一次。
+# 脚本内部有节流，不会每来一个请求就真的去拉订阅。
+#
+# traffic.meter.collect = type=http-request,pattern=^http://(?:www\.)?gstatic\.com/generate_204,timeout=60,script-path=TrafficMeter.js,argument=repo=darveydev/airport-traffic-monitor&token=github_pat_xxxxxxxx&device=iPhone&branch=main
