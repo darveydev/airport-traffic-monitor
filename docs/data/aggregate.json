@@ -1,17 +1,17 @@
 {
- "generatedAt": "2026-10-25T14:21:06.718Z",
- "generatedAtLocal": "2026-10-25 22:21",
+ "generatedAt": "2026-10-25T18:23:41.003Z",
+ "generatedAtLocal": "2026-10-26 02:23",
  "timezone": "Asia/Shanghai",
- "today": "2026-10-25",
+ "today": "2026-10-26",
  "cycleStart": "2026-10-01",
  "resetDay": 1,
- "nowHourKey": "2026-10-25T22",
+ "nowHourKey": "2026-10-26T02",
  "staleMinutes": 60,
  "totals": {
   "up": 4123168604,
   "down": 174461571564,
   "cycle": 178584740168,
-  "today": 22333829939,
+  "today": 0,
   "last24h": 4831838208
  },
  "airports": [
@@ -49,7 +49,7 @@
    "name": "iPhone",
    "source": "sub",
    "updatedAt": 1792904128,
-   "todayBytes": 22333829939,
+   "todayBytes": 0,
    "cycleBytes": 178584740169,
    "exclusive": true,
    "airports": [
