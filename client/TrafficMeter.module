@@ -31,4 +31,4 @@ traffic.meter.collect = type=cron,cronexp="*/10 * * * *",timeout=60,script-path=
 # 删掉上面那行，改用下面这行 —— 挂在系统「网络探测」请求上，有网就会顺带跑一次。
 # 脚本内部有节流，不会每来一个请求就真的去拉订阅。
 #
-# traffic.meter.collect = type=http-request,pattern=^http://(?:www\.)?gstatic\.com/generate_204,timeout=60,script-path=TrafficMeter.js,argument=repo=darveydev/airport-traffic-monitor&token=github_pat_xxxxxxxx&device=iPhone&branch=main
+# traffic.meter.collect = type=http-request,pattern=^http://(?:www\.)?gstatic\.com/generate_204,timeout=60,script-path=https://raw.githubusercontent.com/darveydev/airport-traffic-monitor/refs/heads/main/client/TrafficMeter.js,argument=repo=darveydev/airport-traffic-monitor&token=github_pat_xxxxxxxx&device=iPhone&branch=main
