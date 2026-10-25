@@ -67,7 +67,7 @@ GitHub Actions（收到 push 就跑）
 
 ### 1. 建仓库，放模板
 
-新建一个仓库（建议**私有**，里面会存订阅链接），把本目录 `traffic-meter-repo/` 里的内容原样推上去：
+新建一个仓库（建议**私有**，里面会存订阅链接），把本目录 `airport-traffic-monitor/` 里的内容原样推上去：
 
 ```
 config/meter.json           ← 机场列表 + 订阅链接 + 配额
@@ -206,7 +206,7 @@ Settings → Pages → Source 选 `Deploy from a branch`，分支 `main`、目�
 | `TrafficMeter.module` | 小火箭模块，声明 cron 脚本与参数 |
 | `TrafficMeter.js` | 采集 + 差分 + 上传，双源（订阅头 / 节点计数） |
 | `TrafficMeter.test.js` | 自测，`node TrafficMeter.test.js`，62 项用例 |
-| `traffic-meter-repo/` | 推到 GitHub 的仓库模板（Actions + 聚合脚本 + 面板） |
+| `airport-traffic-monitor/` | 推到 GitHub 的仓库模板（Actions + 聚合脚本 + 面板） |
 | `traffic-meter-preview/` | 用样例数据跑出来的面板截图版，看效果用，可删 |
 
 ## 数据格式
