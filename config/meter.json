@@ -1,11 +1,16 @@
 {
-  "_note": "机场列表与订阅链接。改完直接提交到 main，设备端最迟 1 小时内生效（配置有 1 小时缓存）。sub 就是机场给你的订阅地址，脚本靠它读响应头 subscription-userinfo。改 name/quotaGB/color/match 都不影响已记录的历史数据。",
+  "_note": "机场列表与订阅链接。改完直接提交到 main，设备端最迟 1 小时内生效（配置有 1 小时缓存）。",
+  "_formats": [
+    "本仓库支持三类机场订阅：",
+    "1) 标准格式：响应头带 subscription-userinfo —— 最准，直接读 upload/download/total/expire",
+    "2) STATUS 行格式：base64 节点列表首行 STATUS=🚀↑:x,↓:y,TOT:z💡Expires:日期 —— 脚本自动解 base64 后解析",
+    "3) 中文标注格式：Surge 配置里写「剩余流量：x TB，套餐到期：...」—— 只有剩余量，"
+  ],
   "_howto": [
-    "1. 在机场后台复制『订阅链接』，粘贴到对应 sub 字段，替换 REPLACE_ME",
-    "2. name 随便起（中文可以），会显示在看板和图表上",
-    "3. quotaGB 填套餐总流量（GB），用于画配额进度条；不知道就删掉这个字段",
-    "4. color 是看板配色，可删（会自动分配）",
-    "5. match 只在 Surge 等能读节点级流量的客户端里用，正则匹配节点名；小火箭走订阅头不需要它"
+    "quotaGB 是套餐总量（GB），第 3 类机场必须填，因为要用 总量-剩余 反推已用",
+    "statusInBody: true 表示用量在响应体不在响应头（第2、3类机场）",
+    "name 会显示在看板和图表上，中文可以",
+    "color 可删，会自动分配配色"
   ],
   "timezone": "Asia/Shanghai",
   "resetDay": 1,
@@ -15,18 +20,22 @@
   "hoursRetention": 72,
   "airports": [
     {
-      "name": "机场A",
-      "sub": "https://sub.example-a.com/api/v1/client/subscribe?token=REPLACE_ME",
-      "quotaGB": 500,
+      "name": "赔钱机场",
+      "sub": "https://dasho.xn--cp3a08l.com/api/v1/pq/8058728e94b291b67262e63e87d7c657",
+      "quotaGB": 5120,
       "color": "#e5484d",
-      "match": ["^A-", "^香港", "^HK"]
+      "statusInBody": true,
+      "ua": "Shadowrocket/2.2.40 CFNetwork/1496 Darwin/23.5.0",
+      "match": ["^🇯🇵", "^🇸🇬", "^🇺🇸", "^🇹🇼", "^日本", "^新加坡", "^美国", "^台湾"]
     },
     {
-      "name": "机场B",
-      "sub": "https://sub.example-b.com/api/v1/client/subscribe?token=REPLACE_ME",
-      "quotaGB": 200,
+      "name": "跳跳加速",
+      "sub": "https://nowjump.tiaotiao.org/https://hi.nowjiasu.com/now/8c8ce5ee3c35e7b0ff33d03c71e57606",
+      "quotaGB": 100,
       "color": "#3e63dd",
-      "match": ["^B-", "^日本", "^JP"]
+      "statusInBody": true,
+      "ua": "Shadowrocket/2.2.40 CFNetwork/1496 Darwin/23.5.0",
+      "match": ["^剩余流量", "^距离下次重置"]
     }
   ]
 }

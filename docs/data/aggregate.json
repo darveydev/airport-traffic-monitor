@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-10-25T04:46:18.528Z",
- "generatedAtLocal": "2026-10-25 12:46",
+ "generatedAt": "2026-10-25T04:55:28.049Z",
+ "generatedAtLocal": "2026-10-25 12:55",
  "timezone": "Asia/Shanghai",
  "today": "2026-10-25",
  "cycleStart": "2026-10-01",
@@ -8,132 +8,135 @@
  "nowHourKey": "2026-10-25T12",
  "staleMinutes": 60,
  "totals": {
-  "up": 3145728,
-  "down": 62914560,
-  "cycle": 66060288,
-  "today": 11534336,
-  "last24h": 0
+  "up": 4123168604,
+  "down": 174461571564,
+  "cycle": 178584740168,
+  "today": 22333829939,
+  "last24h": 4831838208
  },
  "airports": [
   {
-   "name": "机场A",
-   "up": 2097152,
-   "down": 50331648,
-   "used": 52428800,
-   "cycleUp": 2097152,
-   "cycleDown": 50331648,
-   "cycleBytes": 52428800,
-   "total": 536870912000,
-   "expire": 1798732800,
-   "at": 1792902301,
+   "name": "赔钱机场",
+   "up": 2147483648,
+   "down": 158913789952,
+   "used": 161061273600,
+   "cycleUp": 2147483648,
+   "cycleDown": 158913789952,
+   "cycleBytes": 161061273600,
+   "total": 5497558138880,
+   "expire": 0,
+   "at": 1792904127,
    "color": "#e5484d",
-   "shared": true
+   "shared": false
   },
   {
-   "name": "机场B",
-   "up": 1048576,
-   "down": 12582912,
-   "used": 13631488,
-   "cycleUp": 1048576,
-   "cycleDown": 12582912,
-   "cycleBytes": 13631488,
-   "total": 214748364800,
-   "expire": 1798732800,
-   "at": 1792902301,
+   "name": "跳跳加速",
+   "up": 1975684956,
+   "down": 15547781612,
+   "used": 17523466568,
+   "cycleUp": 1975684956,
+   "cycleDown": 15547781612,
+   "cycleBytes": 17523466568,
+   "total": 107374182400,
+   "expire": 1794153600,
+   "at": 1792904127,
    "color": "#3e63dd",
-   "shared": true
+   "shared": false
   }
  ],
  "devices": [
   {
-   "name": "demo-iPhone",
+   "name": "iPhone",
    "source": "sub",
-   "updatedAt": 1792902301,
-   "todayBytes": 11534336,
-   "cycleBytes": 33554432,
-   "exclusive": false,
+   "updatedAt": 1792904128,
+   "todayBytes": 22333829939,
+   "cycleBytes": 178584740169,
+   "exclusive": true,
    "airports": [
-    "机场A",
-    "机场B"
-   ]
-  },
-  {
-   "name": "demo-MacBook",
-   "source": "sub",
-   "updatedAt": 1792902301,
-   "todayBytes": 5242880,
-   "cycleBytes": 14680064,
-   "exclusive": false,
-   "airports": [
-    "机场A",
-    "机场B"
+    "赔钱机场",
+    "跳跳加速"
    ]
   }
  ],
  "matrix": [
   {
-   "airport": "机场A",
-   "used": 52428800,
+   "airport": "赔钱机场",
+   "used": 161061273600,
    "cells": [
     {
-     "device": "demo-iPhone",
+     "device": "iPhone",
      "source": "sub",
-     "bytes": 52428800,
-     "shared": true
-    },
-    {
-     "device": "demo-MacBook",
-     "source": "sub",
-     "bytes": 52428800,
-     "shared": true
+     "bytes": 161061273600,
+     "shared": false
     }
    ]
   },
   {
-   "airport": "机场B",
-   "used": 13631488,
+   "airport": "跳跳加速",
+   "used": 17523466568,
    "cells": [
     {
-     "device": "demo-iPhone",
+     "device": "iPhone",
      "source": "sub",
-     "bytes": 13631488,
-     "shared": true
-    },
-    {
-     "device": "demo-MacBook",
-     "source": "sub",
-     "bytes": 13631488,
-     "shared": true
+     "bytes": 17523466568,
+     "shared": false
     }
    ]
   }
  ],
  "daily": [
   {
-   "date": "2026-10-23",
-   "total": 7340032,
+   "date": "2026-10-22",
+   "total": 67345087202,
    "byAirport": {
-    "机场A": 6291456,
-    "机场B": 1048576
+    "赔钱机场": 61203283968,
+    "跳跳加速": 6141803234
+   }
+  },
+  {
+   "date": "2026-10-23",
+   "total": 50787988276,
+   "byAirport": {
+    "赔钱机场": 45848775885,
+    "跳跳加速": 4939212391
    }
   },
   {
    "date": "2026-10-24",
-   "total": 14680064,
+   "total": 38117834752,
    "byAirport": {
-    "机场A": 11534336,
-    "机场B": 3145728
+    "赔钱机场": 34144990003,
+    "跳跳加速": 3972844749
    }
   },
   {
    "date": "2026-10-25",
-   "total": 11534336,
+   "total": 22333829939,
    "byAirport": {
-    "机场A": 9437184,
-    "机场B": 2097152
+    "赔钱机场": 19864223744,
+    "跳跳加速": 2469606195
    }
   }
  ],
- "hourly": [],
+ "hourly": [
+  {
+   "key": "2026-10-25T11",
+   "label": "11:00",
+   "total": 1610612736,
+   "byAirport": {
+    "赔钱机场": 1288490189,
+    "跳跳加速": 322122547
+   }
+  },
+  {
+   "key": "2026-10-25T12",
+   "label": "12:00",
+   "total": 3221225472,
+   "byAirport": {
+    "赔钱机场": 2576980378,
+    "跳跳加速": 644245094
+   }
+  }
+ ],
  "warnings": []
 }

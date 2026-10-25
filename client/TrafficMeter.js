@@ -293,6 +293,120 @@ function tmFindHeader(headers, name) {
   return null;
 }
 
+/* -------------------- 非标准格式：部分机场不发送 subscription-userinfo ----------
+ * 实测过的两种变体（都拿不到标准头，只能解析响应体）：
+ *
+ *   A) STATUS 行（base64 编码的节点列表，首行是明文 STATUS）
+ *      STATUS=🚀↑:1.84GB,↓:14.48GB,TOT:100GB💡Expires:2026-11-08
+ *      ↑ = 上传，↓ = 下载，TOT = 套餐总量，Expires = 到期日
+ *
+ *   B) 中文标注（Surge 配置的节点组名里塞用量）
+ *      剩余流量：4.85 TB，套餐到期：长期有效
+ *      这种只有"剩余"没有"已用"，需要配合 quotaGB 反推已用
+ * ------------------------------------------------------------------------- */
+
+/** 把 "1.84GB" / "4.85 TB" / "100GB" 解析成字节数 */
+function tmParseSize(str) {
+  if (!str) return 0;
+  var m = String(str).match(/([0-9]+(?:\.[0-9]+)?)\s*([KMGTP]?)i?B/i);
+  if (!m) return 0;
+  var v = parseFloat(m[1]);
+  if (!isFinite(v)) return 0;
+  var unit = (m[2] || '').toUpperCase();
+  var pow = { '': 0, K: 1, M: 2, G: 3, T: 4, P: 5 }[unit];
+  return Math.round(v * Math.pow(1024, pow || 0));
+}
+
+/** 解析 "2026-11-08" / "长期有效" → unix 秒；无法解析返回 0 */
+function tmParseExpireText(str) {
+  if (!str) return 0;
+  var s = String(str).trim();
+  if (/长期|永久|无限|不过期/.test(s)) return 0;   // 长期有效 = 无到期日
+  var m = s.match(/(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})/);
+  if (!m) return 0;
+  var t = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 16, 0, 0) / 1000;
+  return isFinite(t) ? Math.round(t) : 0;
+}
+
+/** 格式 A：STATUS=🚀↑:1.84GB,↓:14.48GB,TOT:100GB💡Expires:2026-11-08 */
+function tmParseStatusLine(text) {
+  var out = {};
+  if (!text) return out;
+  var m = String(text).match(/STATUS\s*=\s*([^\r\n]+)/i);
+  if (!m) return out;
+  var line = m[1];
+
+  var up = line.match(/[↑⬆]\s*[:：]?\s*([0-9.]+\s*[KMGTP]?i?B)/i);
+  var down = line.match(/[↓⬇]\s*[:：]?\s*([0-9.]+\s*[KMGTP]?i?B)/i);
+  var tot = line.match(/TOT\s*[:：]?\s*([0-9.]+\s*[KMGTP]?i?B)/i);
+  var exp = line.match(/Expires?\s*[:：]?\s*([0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2})/i);
+
+  if (up) out.upload = tmParseSize(up[1]);
+  if (down) out.download = tmParseSize(down[1]);
+  if (tot) out.total = tmParseSize(tot[1]);
+  if (exp) out.expire = tmParseExpireText(exp[1]);
+  return out;
+}
+
+/** 格式 B：剩余流量：4.85 TB，套餐到期：长期有效（只有剩余量） */
+function tmParseRemainText(text) {
+  var out = {};
+  if (!text) return out;
+  var body = String(text);
+  var rem = body.match(/剩余流量\s*[:：]\s*([0-9.]+\s*[KMGTP]?i?B)/i);
+  var exp = body.match(/套餐到期\s*[:：]\s*([^\r\n,，|]+)/i);
+  if (rem) out.remain = tmParseSize(rem[1]);
+  if (exp) out.expire = tmParseExpireText(exp[1]);
+  return out;
+}
+
+/**
+ * 通用入口：从一次订阅响应里尽力提取用量。
+ * 依次尝试 标准头 → STATUS 行 → base64 解码后再试 → 中文剩余量。
+ * 返回 {upload, download, total, remain, expire}，取不到的字段不出现。
+ */
+function tmExtractUsage(headers, bodyText, isBase64) {
+  var res = {};
+
+  // 1. 标准头
+  var std = tmParseUserInfo(tmFindHeader(headers, 'subscription-userinfo'));
+  var hasStd = false;
+  ['upload', 'download', 'total', 'expire'].forEach(function (k) {
+    if (std[k] !== undefined && std[k] !== null) { res[k] = std[k]; hasStd = true; }
+  });
+  if (hasStd) return res;
+
+  var body = String(bodyText || '');
+
+  // 2. 响应体里的 STATUS 行（明文）
+  var st = tmParseStatusLine(body);
+  if (Object.keys(st).length) return tmMergeUsage(res, st);
+
+  // 3. 中文"剩余流量"标注（明文）
+  var rm = tmParseRemainText(body);
+  if (Object.keys(rm).length) return tmMergeUsage(res, rm);
+
+  // 4. base64 解一层再试（节点列表常见编码方式）
+  if (isBase64 !== false && body.length > 20 && !/[\[{]/.test(body.slice(0, 40))) {
+    var dec = '';
+    try { dec = tmBase64Decode(body); } catch (e) { dec = ''; }
+    if (dec) {
+      var st2 = tmParseStatusLine(dec);
+      if (Object.keys(st2).length) return tmMergeUsage(res, st2);
+      var rm2 = tmParseRemainText(dec);
+      if (Object.keys(rm2).length) return tmMergeUsage(res, rm2);
+    }
+  }
+  return res;
+}
+
+function tmMergeUsage(a, b) {
+  Object.keys(b || {}).forEach(function (k) {
+    if (b[k] !== undefined && b[k] !== null) a[k] = b[k];
+  });
+  return a;
+}
+
 /* ===========================================================================
  * 5. 采集源 B：Surge 系 /v1/metrics（本机节点级）
  * ========================================================================= */
@@ -750,11 +864,25 @@ function tmMain(env) {
       if (airport.ua) opts.headers = { 'User-Agent': airport.ua };
       httpClient.get(opts, function (err, resp, data) {
         var headers = (resp && resp.headers) || {};
-        var info = tmParseUserInfo(tmFindHeader(headers, 'subscription-userinfo'));
-        if (err || !Object.keys(info).length) {
+        var body = typeof data === 'string' ? data : '';
+        // 标准头优先，其次解析响应体里的 STATUS 行 / 中文剩余量，再退到 base64 解码
+        var info = tmExtractUsage(headers, body);
+
+        // 只有"剩余量"没"已用"的机场（如 Surge 配置里塞的「剩余流量：4.85 TB」）：
+        // 套餐总量从 quotaGB 拿，已用 = 总量 - 剩余
+        if (info.remain && !info.download && !info.upload && airport.quotaGB) {
+          var quota = Number(airport.quotaGB) * 1024 * 1024 * 1024;
+          if (quota > info.remain) {
+            info.total = quota;
+            info.download = quota - info.remain;
+            info.upload = 0;
+          }
+        }
+
+        if (err || (!info.upload && !info.download && !info.total)) {
           failed++;
-          tmLog(cfg, 'sub failed: ' + airport.name + ' ' + (err || ('no subscription-userinfo, status=' +
-            (resp && resp.status))));
+          tmLog(cfg, 'sub failed: ' + airport.name + ' ' + (err || ('no usage found, status=' +
+            (resp && resp.status) + ', bodyLen=' + body.length)));
           step();
           return;
         }
@@ -764,6 +892,9 @@ function tmMain(env) {
           t: info.total || 0,
           e: info.expire || 0
         };
+        tmLog(cfg, 'sub ok: ' + airport.name + ' u=' + (info.upload || 0) +
+          ' d=' + (info.download || 0) + ' t=' + (info.total || 0) +
+          (info.remain ? ' remain=' + info.remain : ''));
         step();
       });
     }
@@ -886,6 +1017,11 @@ if (typeof module !== 'undefined' && module.exports) {
     nowInfo: tmNow,
     parseUserInfo: tmParseUserInfo,
     findHeader: tmFindHeader,
+    parseSize: tmParseSize,
+    parseExpireText: tmParseExpireText,
+    parseStatusLine: tmParseStatusLine,
+    parseRemainText: tmParseRemainText,
+    extractUsage: tmExtractUsage,
     parsePrometheus: tmParsePrometheus,
     extractFromJson: tmExtractFromJson,
     parseLooseJson: tmParseLooseJson,
