@@ -1,11 +1,11 @@
 {
- "generatedAt": "2026-11-07T18:44:36.609Z",
- "generatedAtLocal": "2026-11-08 02:44",
+ "generatedAt": "2026-11-07T22:42:35.048Z",
+ "generatedAtLocal": "2026-11-08 06:42",
  "timezone": "Asia/Shanghai",
  "today": "2026-11-08",
  "cycleStart": "2026-11-01",
  "resetDay": 1,
- "nowHourKey": "2026-11-08T02",
+ "nowHourKey": "2026-11-08T06",
  "staleMinutes": 60,
  "totals": {
   "up": 4123168604,
